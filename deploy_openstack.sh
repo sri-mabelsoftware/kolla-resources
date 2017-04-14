@@ -75,15 +75,15 @@ sudo yum install python-pip -y
 sudo pip install -U pip
 sudo yum install  -y python-devel libffi-devel gcc openssl-devel
 sudo pip install -U ansible
-curl -sSL https://get.docker.io | sudo bash
+# curl -sSL https://get.docker.io | sudo bash
 sudo yum install ntp -y
 sudo systemctl enable ntpd.service
 sudo systemctl start ntpd.service
 #sudo systemctl stop libvirtd.service
 #sudo systemctl disable libvirtd.service
 sudo pip install -U docker-py
-sudo pvcreate /dev/sdb /dev/sdc
-sudo vgcreate cinder-volumes /dev/sdb /dev/sdc
+# sudo pvcreate /dev/sdb /dev/sdc
+# sudo vgcreate cinder-volumes /dev/sdb /dev/sdc
 # Install Kolla
 cd ~
 sudo pip install kolla-ansible
