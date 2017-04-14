@@ -106,9 +106,9 @@ sudo sed -i '/#openstack_release/i openstack_release: "'$KOLLA_OPENSTACK_VERSION
 sudo kolla-ansible pull
 
 
-sudo sed -i '/#enable_cinder/i enable_cinder: "yes"' /etc/kolla/globals.yml
-sudo sed -i '/#enable_cinder_backend_lvm/i enable_cinder_backend_lvm: "yes"' /etc/kolla/globals.yml
-sudo sed -i '/#cinder_volume_group/i cinder_volume_group: "cinder-volumes"' /etc/kolla/globals.yml
+#sudo sed -i '/#enable_cinder/i enable_cinder: "yes"' /etc/kolla/globals.yml
+#sudo sed -i '/#enable_cinder_backend_lvm/i enable_cinder_backend_lvm: "yes"' /etc/kolla/globals.yml
+#sudo sed -i '/#cinder_volume_group/i cinder_volume_group: "cinder-volumes"' /etc/kolla/globals.yml
 sudo sed -i 's/^kolla_internal_vip_address:\s.*$/kolla_internal_vip_address: "'$KOLLA_INTERNAL_VIP_ADDRESS'"/g' /etc/kolla/globals.yml
 sudo sed -i '/#network_interface/i network_interface: "eth0"' /etc/kolla/globals.yml
 sudo sed -i '/#neutron_external_interface/i neutron_external_interface: "eth1"' /etc/kolla/globals.yml
