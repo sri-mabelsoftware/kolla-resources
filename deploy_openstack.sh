@@ -1,50 +1,60 @@
 #!/bin/bash
 set -e
 
-MGMT_IP=10.101.0.249
-MGMT_NETMASK=255.255.0.0
-MGMT_GATEWAY=10.101.101.1
+MGMT_IP=192.168.1.44
+MGMT_NETMASK=255.255.255.0
+MGMT_GATEWAY=192.168.1.1
 MGMT_DNS="8.8.8.8 8.8.4.4"
 
-FIP_START=10.101.64.2
-FIP_END=10.101.64.200
-FIP_GATEWAY=10.101.4.1
-FIP_CIDR=10.101.0.0/16
+FIP_START=192.168.1.91
+FIP_END=192.168.64.97
+FIP_GATEWAY=192.168.1.1
+FIP_CIDR=192.168.1.0/8
 TENANT_NET_DNS="8.8.8.8 8.8.4.4"
 
-KOLLA_INTERNAL_VIP_ADDRESS=10.101.231.254
+KOLLA_INTERNAL_VIP_ADDRESS=192.168.1.254
 
-KOLLA_BRANCH=stable/newton
-KOLLA_OPENSTACK_VERSION=3.0.2
+KOLLA_BRANCH=stable/ocata
+KOLLA_OPENSTACK_VERSION=4.0.0
 
-DOCKER_NAMESPACE=cloudbaseit
+DOCKER_NAMESPACE=kolla
 
-sudo tee /etc/network/interfaces <<EOF
-# The loopback network interface
-auto lo
-iface lo inet loopback
+sudo tee /etc/sysconfig/network-scripts/ifcfg-eth0 <<EOF
+TYPE="Ethernet"
+BOOTPROTO="none"
+DEFROUTE="yes"
+IPV4_FAILURE_FATAL="no"
+IPV6INIT="yes"
+IPV6_AUTOCONF="yes"
+IPV6_DEFROUTE="yes"
+IPV6_FAILURE_FATAL="no"
+IPV6_ADDR_GEN_MODE="stable-privacy"
+NAME="eth0"
+DEVICE="eth0"
+ONBOOT="yes"
+IPADDR="192.168.1.44"
+PREFIX="24"
+GATEWAY="192.168.1.1"
+DNS1="192.168.1.1"
+IPV6_PEERDNS="yes"
+IPV6_PEERROUTES="yes"
+IPV6_PRIVACY="no"
+EOF
 
-# The primary network interface
-auto eth0
-iface eth0 inet static
-address $MGMT_IP
-netmask $MGMT_NETMASK
-gateway $MGMT_GATEWAY
-dns-nameservers $MGMT_DNS
+sudo tee /etc/sysconfig/network-scripts/ifcfg-eth1 <<EOF
+TYPE="Ethernet"
+BOOTPROTO="none"
+NAME="eth1"
+DEVICE="eth1"
+ONBOOT="yes"
+EOF
 
-auto eth1
-iface eth1 inet manual
-up ip link set \$IFACE up
-up ip link set \$IFACE promisc on
-down ip link set \$IFACE promisc off
-down ip link set \$IFACE down
-
-auto eth2
-iface eth2 inet manual
-up ip link set \$IFACE up
-up ip link set \$IFACE promisc on
-down ip link set \$IFACE promisc off
-down ip link set \$IFACE down
+sudo tee /etc/sysconfig/network-scripts/ifcfg-eth2 <<EOF
+TYPE="Ethernet"
+BOOTPROTO="none"
+NAME="eth2"
+DEVICE="eth2"
+ONBOOT="yes"
 EOF
 
 for iface in eth0 eth1 eth2
@@ -54,22 +64,24 @@ do
 done
 
 # Get Docker and Ansible
-sudo apt-add-repository ppa:ansible/ansible -y
-sudo apt-get update
-sudo apt-get install -y docker.io ansible
-
-# NTP client
-sudo apt-get install -y ntp
-
-# Remove lxd or lxc so it won't bother Docker
-sudo apt-get remove -y lxd lxc
+sudo yum install epel-release
+sudo yum install python-pip
+sudo pip install -U pip
+sudo yum install python-devel libffi-devel gcc openssl-devel
+sudo pip install -U ansible
+curl -sSL https://get.docker.io | sudo bash
+sudo yum install ntp
+sudo systemctl enable ntpd.service
+sudo systemctl start ntpd.service
+sudo systemctl stop libvirtd.service
+sudo systemctl disable libvirtd.service
+sudo pip install -U docker-py
 
 # Install Kolla
 cd ~
-git clone https://github.com/openstack/kolla -b $KOLLA_BRANCH
-sudo apt-get install -y python-pip
-sudo pip install ./kolla
-sudo cp -r kolla/etc/kolla /etc/
+sudo pip install kolla-ansible
+sudo cp -r /usr/share/kolla-ansible/etc_examples/kolla /etc/kolla/
+sudo cp /usr/share/kolla-ansible/ansible/inventory/* .
 
 sudo mkdir -p /etc/systemd/system/docker.service.d
 sudo tee /etc/systemd/system/docker.service.d/kolla.conf <<-'EOF'
@@ -81,7 +93,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 
 # Get the container images for the OpenStack services
-sudo sed -i '/#kolla_base_distro/i kolla_base_distro: "ubuntu"' /etc/kolla/globals.yml
+sudo sed -i '/#kolla_base_distro/i kolla_base_distro: "centos"' /etc/kolla/globals.yml
 sudo sed -i '/#docker_namespace/i docker_namespace: "'$DOCKER_NAMESPACE'"' /etc/kolla/globals.yml
 sudo sed -i '/#openstack_release/i openstack_release: "'$KOLLA_OPENSTACK_VERSION'"' /etc/kolla/globals.yml
 sudo kolla-ansible pull
@@ -116,14 +128,15 @@ EOF
 
 # kolla-ansible prechecks fails if the hostname in the hosts file is set to 127.0.1.1
 MGMT_IP=$(sudo ip addr show eth0 | sed -n 's/^\s*inet \([0-9.]*\).*$/\1/p')
-sudo bash -c "echo $MGMT_IP $(hostname) >> /etc/hosts"
+# sudo bash -c "echo $MGMT_IP $(hostname) >> /etc/hosts"
 
 # Generate random passwords for all OpenStack services
 sudo kolla-genpwd
 
-sudo kolla-ansible prechecks -i kolla/ansible/inventory/all-in-one
-sudo kolla-ansible deploy -i kolla/ansible/inventory/all-in-one
-sudo kolla-ansible post-deploy -i kolla/ansible/inventory/all-in-one
+#sudo kolla-ansible prechecks -i all-in-one
+sudo kolla-ansible -i  all-in-one bootstrap-servers
+#sudo kolla-ansible deploy -i all-in-one
+#sudo kolla-ansible post-deploy -i all-in-one
 
 sudo docker exec --privileged openvswitch_vswitchd ovs-vsctl add-br br-data
 sudo docker exec --privileged openvswitch_vswitchd ovs-vsctl add-port br-data eth2
@@ -136,18 +149,22 @@ sudo docker exec --privileged openvswitch_vswitchd ovs-vsctl set interface int-b
 
 
 # Remove unneeded Nova containers
-for name in nova_compute nova_ssh nova_libvirt
-do
-    for id in $(sudo docker ps -q -a -f name=$name)
-    do
-        sudo docker stop $id
-        sudo docker rm $id
-    done
-done
+#for name in nova_compute nova_ssh nova_libvirt
+#do
+#    for id in $(sudo docker ps -q -a -f name=$name)
+#    do
+#        sudo docker stop $id
+#        sudo docker rm $id
+#    done
+#done
 
 
 #sudo add-apt-repository cloud-archive:newton -y && apt-get update
-sudo apt-get install -y python-openstackclient
+sudo pip install python-novaclient
+sudo pip install python-neutronclient
+sudo pip install python-keystoneclient
+sudo pip install python-keystoneclient
+sudo pip install python-cinderclient
 
 source /etc/kolla/admin-openrc.sh
 
