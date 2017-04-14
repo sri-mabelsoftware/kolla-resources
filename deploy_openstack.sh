@@ -143,10 +143,10 @@ MGMT_IP=$(sudo ip addr show eth0 | sed -n 's/^\s*inet \([0-9.]*\).*$/\1/p')
 # Generate random passwords for all OpenStack services
 sudo kolla-genpwd
 
-#sudo kolla-ansible prechecks -i all-in-one
-sudo kolla-ansible -i  all-in-one bootstrap-servers
-#sudo kolla-ansible deploy -i all-in-one
-#sudo kolla-ansible post-deploy -i all-in-one
+#sudo kolla-ansible -i  all-in-one bootstrap-servers
+sudo kolla-ansible prechecks -i all-in-one
+sudo kolla-ansible deploy -i all-in-one
+sudo kolla-ansible post-deploy -i all-in-one
 
 sudo docker exec --privileged openvswitch_vswitchd ovs-vsctl add-br br-data
 sudo docker exec --privileged openvswitch_vswitchd ovs-vsctl add-port br-data eth2
