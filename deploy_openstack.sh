@@ -159,14 +159,14 @@ sudo docker exec --privileged openvswitch_vswitchd ovs-vsctl set interface int-b
 
 
 # Remove unneeded Nova containers
-#for name in nova_compute nova_ssh nova_libvirt
-#do
-#    for id in $(sudo docker ps -q -a -f name=$name)
-#    do
-#        sudo docker stop $id
-#        sudo docker rm $id
-#    done
-#done
+for name in nova_compute nova_ssh nova_libvirt
+do
+    for id in $(sudo docker ps -q -a -f name=$name)
+    do
+        sudo docker stop $id
+        sudo docker rm $id
+    done
+done
 
 
 #sudo add-apt-repository cloud-archive:newton -y && apt-get update
