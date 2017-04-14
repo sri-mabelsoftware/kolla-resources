@@ -21,11 +21,11 @@ DOCKER_NAMESPACE=kolla
 
 
 # kolla-ansible prechecks fails if the hostname in the hosts file is set to 127.0.1.1
-MGMT_IP=$(sudo ip addr show eth0 | sed -n 's/^\s*inet \([0-9.]*\).*$/\1/p')
+# MGMT_IP=$(sudo ip addr show eth0 | sed -n 's/^\s*inet \([0-9.]*\).*$/\1/p')
 # sudo bash -c "echo $MGMT_IP $(hostname) >> /etc/hosts"
 
 # Generate random passwords for all OpenStack services
-sudo kolla-genpwd
+#sudo kolla-genpwd
 
 #sudo kolla-ansible -i  all-in-one bootstrap-servers
 sudo kolla-ansible prechecks -i all-in-one
