@@ -75,7 +75,7 @@ sudo yum install python-pip -y
 sudo pip install -U pip
 sudo yum install  -y python-devel libffi-devel gcc openssl-devel
 sudo pip install -U ansible
-curl -sSL https://get.docker.io | sudo bash
+# curl -sSL https://get.docker.io | sudo bash
 sudo yum install ntp -y
 sudo systemctl enable ntpd.service
 sudo systemctl start ntpd.service
@@ -138,7 +138,7 @@ EOF
 
 # kolla-ansible prechecks fails if the hostname in the hosts file is set to 127.0.1.1
 MGMT_IP=$(sudo ip addr show eth0 | sed -n 's/^\s*inet \([0-9.]*\).*$/\1/p')
-sudo bash -c "echo $MGMT_IP $(hostname) >> /etc/hosts"
+# sudo bash -c "echo $MGMT_IP $(hostname) >> /etc/hosts"
 
 # Generate random passwords for all OpenStack services
 sudo kolla-genpwd
