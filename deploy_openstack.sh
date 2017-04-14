@@ -64,16 +64,22 @@ do
 done
 
 # Get Docker and Ansible
-sudo yum install epel-release
-sudo yum install python-pip
+sudo systemctl disable firewalld
+sudo systemctl stop firewalld
+sudo systemctl disable NetworkManager
+sudo systemctl stop NetworkManager
+sudo systemctl enable network
+sudo systemctl start network
+sudo yum install epel-release -y
+sudo yum install python-pip -y
 sudo pip install -U pip
-sudo yum install python-devel libffi-devel gcc openssl-devel
+sudo yum install  -y python-devel libffi-devel gcc openssl-devel
 sudo pip install -U ansible
 curl -sSL https://get.docker.io | sudo bash
-sudo yum install ntp
+sudo yum install ntp -y
 sudo systemctl enable ntpd.service
 sudo systemctl start ntpd.service
-sudo systemctl stop libvirtd.service
+#sudo systemctl stop libvirtd.service
 sudo systemctl disable libvirtd.service
 sudo pip install -U docker-py
 
