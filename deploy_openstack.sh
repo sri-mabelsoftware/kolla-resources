@@ -82,7 +82,8 @@ sudo systemctl start ntpd.service
 #sudo systemctl stop libvirtd.service
 #sudo systemctl disable libvirtd.service
 sudo pip install -U docker-py
-
+sudo pvcreate /dev/sdb /dev/sdc
+sudo vgcreate cinder-volumes /dev/sdb /dev/sdc
 # Install Kolla
 cd ~
 sudo pip install kolla-ansible
@@ -105,6 +106,9 @@ sudo sed -i '/#openstack_release/i openstack_release: "'$KOLLA_OPENSTACK_VERSION
 sudo kolla-ansible pull
 
 
+sudo sed -i '/#enable_cinder/i enable_cinder: "yes"' /etc/kolla/globals.yml
+sudo sed -i '/#enable_cinder_backend_lvm/i enable_cinder_backend_lvm: "yes"' /etc/kolla/globals.yml
+sudo sed -i '/#cinder_volume_group/i cinder_volume_group: "cinder-volumes"' /etc/kolla/globals.yml
 sudo sed -i 's/^kolla_internal_vip_address:\s.*$/kolla_internal_vip_address: "'$KOLLA_INTERNAL_VIP_ADDRESS'"/g' /etc/kolla/globals.yml
 sudo sed -i '/#network_interface/i network_interface: "eth0"' /etc/kolla/globals.yml
 sudo sed -i '/#neutron_external_interface/i neutron_external_interface: "eth1"' /etc/kolla/globals.yml
@@ -112,13 +116,13 @@ sudo sed -i '/#neutron_external_interface/i neutron_external_interface: "eth1"' 
 sudo mkdir -p /etc/kolla/config/neutron
 
 # remove vxlan stuff
-sed -i '/ml2_type_vxlan/d' /usr/local/share/kolla/ansible/roles/neutron/templates/ml2_conf.ini.j2
-sed -i '/vni_ranges/d' /usr/local/share/kolla/ansible/roles/neutron/templates/ml2_conf.ini.j2
-sed -i '/vxlan_group/d' /usr/local/share/kolla/ansible/roles/neutron/templates/ml2_conf.ini.j2
-sed -i '/tunnel_types/d' /usr/local/share/kolla/ansible/roles/neutron/templates/ml2_conf.ini.j2
-sed -i '/l2_population/d' /usr/local/share/kolla/ansible/roles/neutron/templates/ml2_conf.ini.j2
-sed -i '/arp_responder/d' /usr/local/share/kolla/ansible/roles/neutron/templates/ml2_conf.ini.j2
-sed -i '/\[agent\]/d' /usr/local/share/kolla/ansible/roles/neutron/templates/ml2_conf.ini.j2
+sed -i '/ml2_type_vxlan/d' /usr/share/kolla-ansible/roles/neutron/templates/ml2_conf.ini.j2
+sed -i '/vni_ranges/d' /usr/share/kolla-ansible/roles/neutron/templates/ml2_conf.ini.j2
+sed -i '/vxlan_group/d' /usr/share/kolla-ansible/roles/neutron/templates/ml2_conf.ini.j2
+sed -i '/tunnel_types/d' /usr/share/kolla-ansible/roles/neutron/templates/ml2_conf.ini.j2
+sed -i '/l2_population/d' /usr/share/kolla-ansible/roles/neutron/templates/ml2_conf.ini.j2
+sed -i '/arp_responder/d' /usr/share/kolla-ansible/roles/neutron/templates/ml2_conf.ini.j2
+sed -i '/\[agent\]/d' /usr/share/kolla-ansible/roles/neutron/templates/ml2_conf.ini.j2
 
 sudo tee /etc/kolla/config/neutron/ml2_conf.ini <<-'EOF'
 [ml2]
