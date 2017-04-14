@@ -80,7 +80,7 @@ sudo yum install ntp -y
 sudo systemctl enable ntpd.service
 sudo systemctl start ntpd.service
 #sudo systemctl stop libvirtd.service
-sudo systemctl disable libvirtd.service
+#sudo systemctl disable libvirtd.service
 sudo pip install -U docker-py
 
 # Install Kolla
